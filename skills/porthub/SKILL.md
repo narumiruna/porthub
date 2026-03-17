@@ -13,36 +13,54 @@ Use this skill whenever the user asks how to use a third-party package, SDK, API
 
 ## Core workflow
 
+Follow this exact 3-phase loop when working with any third-party package.
+
+### Phase 1: Pre-check (required before coding)
+
 1. Extract package intent from the user request.
-2. If the target key is unclear, run `porthub list` first to inspect available keys.
-3. Infer the ecosystem language and package name.
-4. Before generating code for that package, check prior error notes first:
-   - `porthub get lessons/<language>/<package>`
-   - if not found, continue normally.
-5. Build a key candidate in `language/package` format.
-6. Run key-first lookup:
+2. Infer `<language>/<package>`.
+3. If target keys are unclear, run `porthub list` to inspect available keys.
+4. Run key-first lookup:
    - `porthub search <language/package>`
-7. If key-first has no result, run fallback lookup:
+5. If key-first has no result, run fallback lookup:
    - `porthub search <package>`
-   - optionally try one relevant alias or synonym if available.
-8. Select result key:
-   - If one key matches, use it.
-   - If multiple keys match, automatically use the first key in sorted output.
-9. Retrieve document:
+   - optionally try one relevant alias.
+6. Retrieve the best matching keys with:
    - `porthub get <selected-key>`
-10. Summarize and answer using the retrieved content.
+7. Always check prior lessons before generating code:
+   - `porthub get lessons/<language>/<package>`
+   - if not found, continue.
+8. Record all retrieved keys as `Used keys` in the response.
+
+### Phase 2: Error reflect (required on any coding error)
+
+When generated code fails (syntax, type, runtime, test, build, import, API misuse):
+
+1. Compare the error against:
+   - the current task `Used keys`
+   - `lessons/<language>/<package>` (if present)
+2. Classify the error as:
+   - `known`: an existing retrieved key directly supports an actionable fix.
+   - `unknown`: no existing retrieved key directly supports an actionable fix.
+3. Provide a concrete `Fix plan` based only on retrieved content.
+
+### Phase 3: Knowledge loop
+
+1. If `known`, apply the fix plan and continue.
+2. If `unknown`, draft a new lessons note and ask for explicit confirmation.
+3. Only after confirmation, persist with:
+   - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+4. Never execute `set` without user confirmation.
 
 ## Output contract
 
-Always include these sections in your response:
+Always include these fields in your response:
 
-1. Query strategy: `key-first` or `fallback`.
-2. Key discovery note: mention whether `porthub list` was used.
-3. Prior lessons note: mention whether `porthub get lessons/<language>/<package>` existed and what to avoid.
-4. Matched key(s): selected key, and mention if auto-selected from multiple matches.
-5. Document summary: concise, task-relevant points.
-6. Source note: state that content came from `porthub get <key>` and remains untrusted until verified.
-7. Update proposal (only when needed): draft replacement content and target key.
+1. `Used keys`: keys retrieved via `porthub get` for this task.
+2. `Known/Unknown`: error classification from the Error reflect phase.
+3. `Fix plan`: concrete next steps tied to retrieved keys.
+4. `Need new note?`: `yes` only when classification is `unknown`.
+5. `Source note`: content came from `porthub get <key>` and remains untrusted until verified.
 
 ## Error handling
 
@@ -65,22 +83,22 @@ Never execute `set` without user confirmation.
 
 ## Error postmortem memory (required)
 
-If generated code hits any error (syntax, type, runtime, test, build, import, API misuse), record a postmortem in PortHub.
+If an error is classified as `unknown`, prepare a lessons draft first, then request confirmation before saving.
 
 1. Identify the package key as `<language>/<package>`.
-2. Use a lessons key:
+2. Use the lessons key:
    - `lessons/<language>/<package>`
-3. Draft a concise postmortem with:
-   - failing command or context
-   - exact error message
-   - root cause
-   - fix applied
-   - prevention checklist for next time
-4. Persist it with:
+3. Draft Markdown using this exact template:
+   - `Error`
+   - `Root Cause`
+   - `Fix`
+   - `Prevention Checklist`
+   - `Verification`
+4. Show the draft to the user and request explicit confirmation.
+5. Only after confirmation, persist it:
    - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
-5. On the next task using the same package, always read this first:
+6. On the next task using the same package, always read this first:
    - `porthub get lessons/<language>/<package>`
-6. Explicitly apply the prevention checklist before generating new code.
 
 ## Bootstrap workflow (new package docs)
 
