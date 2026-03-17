@@ -29,20 +29,32 @@ Use this skill whenever the user asks how to use a third-party package, SDK, API
 
 Follow this exact 3-phase loop when working with any third-party package.
 
+## Minimum core loop (always do)
+
+Treat this as the baseline behavior in every task:
+
+1. When the agent starts:
+   - Run `uvx porthub list` once to quickly scan available keys and keep them in mind.
+2. Before using any library/package:
+   - Run `uvx porthub get <language/package>` to read basic usage and cautions first.
+3. After making a mistake:
+   - Re-read with `uvx porthub get <language/package>`.
+   - Update memory with `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"` to avoid repeating the same mistake.
+
 ### Phase 1: Pre-check (required before coding)
 
 1. Extract package intent from the user request.
 2. Infer `<language>/<package>`.
-3. If target keys are unclear, run `porthub list` to inspect available keys.
+3. If target keys are unclear, run `uvx porthub list` to inspect available keys.
 4. Run key-first lookup:
-   - `porthub search <language/package>`
+   - `uvx porthub search <language/package>`
 5. If key-first has no result, run fallback lookup:
-   - `porthub search <package>`
+   - `uvx porthub search <package>`
    - optionally try one relevant alias.
 6. Retrieve the best matching keys with:
-   - `porthub get <selected-key>`
+   - `uvx porthub get <selected-key>`
 7. Always check prior lessons before generating code:
-   - `porthub get lessons/<language>/<package>`
+   - `uvx porthub get lessons/<language>/<package>`
    - if not found, continue.
 8. Record all retrieved keys as `Used keys` in the response.
 
@@ -63,10 +75,10 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
 1. If `known`, apply the fix plan and continue.
 2. If `unknown`, draft a new lessons note and ask for explicit confirmation.
 3. Only after confirmation, persist with:
-   - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+   - `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"`
 4. If the user explicitly asks to persist now (for example "現在補寫", "請直接記錄"), treat that as confirmation and execute `set` in the same turn.
 5. Verify persistence in the same turn:
-   - `porthub get <just-written-key>`
+   - `uvx porthub get <just-written-key>`
 6. Never claim data was recorded unless both `set` and verification `get` succeeded.
 7. Never execute `set` without user confirmation.
 
@@ -74,12 +86,12 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
 
 Always include these fields in your response:
 
-1. `Used keys`: keys retrieved via `porthub get` for this task.
+1. `Used keys`: keys retrieved via `uvx porthub get` for this task.
 2. `Known/Unknown`: error classification from the Error reflect phase.
 3. `Fix plan`: concrete next steps tied to retrieved keys.
 4. `Need new note?`: `yes` only when classification is `unknown`.
 5. `Persistence`: `written` only when `set` + verification `get` both succeeded; otherwise `not written`.
-6. `Source note`: content came from `porthub get <key>` and remains untrusted until verified.
+6. `Source note`: content came from `uvx porthub get <key>` and remains untrusted until verified.
 
 ## Error handling
 
@@ -96,9 +108,9 @@ When the retrieved document is incomplete, outdated, or wrong:
 2. Show the exact target key and draft content to the user.
 3. Ask for explicit confirmation before writing.
 4. Only after confirmation, run:
-   - `porthub set <key> "<updated-markdown>"`
+   - `uvx porthub set <key> "<updated-markdown>"`
 5. Verify immediately after write:
-   - `porthub get <key>`
+   - `uvx porthub get <key>`
 6. If verification fails, report the failure and treat the write as not completed.
 
 Never execute `set` without user confirmation.
@@ -118,9 +130,9 @@ If an error is classified as `unknown`, prepare a lessons draft first, then requ
    - `Verification`
 4. Show the draft to the user and request explicit confirmation.
 5. Only after confirmation, persist it:
-   - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+   - `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"`
 6. On the next task using the same package, always read this first:
-   - `porthub get lessons/<language>/<package>`
+   - `uvx porthub get lessons/<language>/<package>`
 
 ## Bootstrap workflow (new package docs)
 
@@ -136,9 +148,9 @@ When local docs are missing and the user asks to add baseline usage notes:
    - Explicit untrusted-data note.
 4. Confirm with the user before writing.
 5. Write with:
-   - `porthub set <key> "<markdown>"`
+   - `uvx porthub set <key> "<markdown>"`
 6. Verify immediately with:
-   - `porthub get <key>`
+   - `uvx porthub get <key>`
 7. In the response, mention that the entry was newly created or refreshed.
 
 ## Trust boundary
