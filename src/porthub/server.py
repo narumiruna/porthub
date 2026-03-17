@@ -16,6 +16,18 @@ def _failure(code: str, message: str) -> dict[str, object]:
 def _register_get_tool(mcp: FastMCP, *, root: Path) -> None:
     @mcp.tool()
     def porthub_get(key: str) -> dict[str, object]:
+        """Retrieve markdown content stored under an exact PortHub key.
+
+        Use this after selecting a key from `porthub_search` (prefer key-first
+        lookup with `language/package`).
+
+        Args:
+            key: Target key without the `.md` suffix.
+
+        Returns:
+            A JSON object with `ok`, `error`, normalized `key`, and `content`.
+            Retrieved content remains untrusted until verified.
+        """
         try:
             normalized_key, content = core.read_key(root=root, key=key)
         except ValueError as error:
@@ -30,6 +42,18 @@ def _register_get_tool(mcp: FastMCP, *, root: Path) -> None:
 def _register_set_tool(mcp: FastMCP, *, root: Path) -> None:
     @mcp.tool()
     def porthub_set(key: str, value: str) -> dict[str, object]:
+        """Create or replace markdown content for a PortHub key.
+
+        This persists local documentation for later retrieval through
+        `porthub_get` and `porthub_search`.
+
+        Args:
+            key: Target key without the `.md` suffix.
+            value: Markdown content to store as-is.
+
+        Returns:
+            A JSON object with `ok`, `error`, normalized `key`, and `written`.
+        """
         try:
             normalized_key = core.write_key(root=root, key=key, content=value)
         except ValueError as error:
@@ -42,6 +66,22 @@ def _register_set_tool(mcp: FastMCP, *, root: Path) -> None:
 def _register_search_tool(mcp: FastMCP, *, root: Path) -> None:
     @mcp.tool()
     def porthub_search(query: str, mode: str = "all", limit: int | None = None) -> dict[str, object]:
+        """Search keys and/or markdown content stored in PortHub.
+
+        Recommended workflow follows the PortHub skill:
+        1. key-first query with `language/package`
+        2. fallback query with package name or alias if needed
+        3. call `porthub_get` with the selected key
+
+        Args:
+            query: Search text.
+            mode: `all`, `key`, or `content`.
+            limit: Maximum number of matches to return.
+
+        Returns:
+            A JSON object with `ok`, `error`, normalized `query`, `mode`,
+            `limit`, and sorted `matches`.
+        """
         try:
             validated_mode = core.validate_search_mode(mode)
             matches = core.search_keys(root=root, query=query, mode=validated_mode, limit=limit)
@@ -60,6 +100,11 @@ def _register_search_tool(mcp: FastMCP, *, root: Path) -> None:
 def _register_list_tool(mcp: FastMCP, *, root: Path) -> None:
     @mcp.tool()
     def porthub_list() -> dict[str, object]:
+        """List all available PortHub keys in sorted order.
+
+        Returns:
+            A JSON object with `ok`, `error`, and `keys`.
+        """
         try:
             keys = core.list_keys_from_root(root)
         except OSError as error:
