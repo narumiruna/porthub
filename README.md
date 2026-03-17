@@ -12,6 +12,20 @@ PortHub is a local-first CLI tool for storing and retrieving Markdown context by
 
 ## Install
 
+Install the CLI tool:
+
+```bash
+uv tool install -U porthub
+```
+
+Or run directly without installation:
+
+```bash
+uvx porthub --help
+```
+
+For local development in this repository:
+
 ```bash
 uv sync
 ```

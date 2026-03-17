@@ -7,6 +7,20 @@ description: Use PortHub as the default retrieval workflow whenever the user ask
 
 Use this skill to retrieve and maintain local package documentation through the `porthub` CLI.
 
+## Prerequisite
+
+Install or upgrade the CLI before using this workflow:
+
+```bash
+uv tool install -U porthub
+```
+
+Or run directly without installation:
+
+```bash
+uvx porthub --help
+```
+
 ## When to use
 
 Use this skill whenever the user asks how to use a third-party package, SDK, API, or framework, especially when implementation details or usage examples are needed.
