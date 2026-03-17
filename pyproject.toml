@@ -6,7 +6,7 @@ readme          = "README.md"
 requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 dependencies    = [
-  "typer>=0.21.1",
+  "typer>=0.24.1",
 ]
 
 [project.scripts]
@@ -16,8 +16,8 @@ porthub = "porthub.cli:app"
 dev = [
   "pytest>=9.0.2",
   "pytest-cov>=7.0.0",
-  "ruff>=0.15.0",
-  "ty>=0.0.15",
+  "ruff>=0.15.6",
+  "ty>=0.0.23",
 ]
 
 [build-system]
