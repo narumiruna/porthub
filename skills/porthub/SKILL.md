@@ -64,7 +64,11 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
 2. If `unknown`, draft a new lessons note and ask for explicit confirmation.
 3. Only after confirmation, persist with:
    - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
-4. Never execute `set` without user confirmation.
+4. If the user explicitly asks to persist now (for example "現在補寫", "請直接記錄"), treat that as confirmation and execute `set` in the same turn.
+5. Verify persistence in the same turn:
+   - `porthub get <just-written-key>`
+6. Never claim data was recorded unless both `set` and verification `get` succeeded.
+7. Never execute `set` without user confirmation.
 
 ## Output contract
 
@@ -74,7 +78,8 @@ Always include these fields in your response:
 2. `Known/Unknown`: error classification from the Error reflect phase.
 3. `Fix plan`: concrete next steps tied to retrieved keys.
 4. `Need new note?`: `yes` only when classification is `unknown`.
-5. `Source note`: content came from `porthub get <key>` and remains untrusted until verified.
+5. `Persistence`: `written` only when `set` + verification `get` both succeeded; otherwise `not written`.
+6. `Source note`: content came from `porthub get <key>` and remains untrusted until verified.
 
 ## Error handling
 
@@ -92,6 +97,9 @@ When the retrieved document is incomplete, outdated, or wrong:
 3. Ask for explicit confirmation before writing.
 4. Only after confirmation, run:
    - `porthub set <key> "<updated-markdown>"`
+5. Verify immediately after write:
+   - `porthub get <key>`
+6. If verification fails, report the failure and treat the write as not completed.
 
 Never execute `set` without user confirmation.
 
