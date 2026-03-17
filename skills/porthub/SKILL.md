@@ -16,18 +16,21 @@ Use this skill whenever the user asks how to use a third-party package, SDK, API
 1. Extract package intent from the user request.
 2. If the target key is unclear, run `porthub list` first to inspect available keys.
 3. Infer the ecosystem language and package name.
-4. Build a key candidate in `language/package` format.
-5. Run key-first lookup:
+4. Before generating code for that package, check prior error notes first:
+   - `porthub get lessons/<language>/<package>`
+   - if not found, continue normally.
+5. Build a key candidate in `language/package` format.
+6. Run key-first lookup:
    - `porthub search <language/package>`
-6. If key-first has no result, run fallback lookup:
+7. If key-first has no result, run fallback lookup:
    - `porthub search <package>`
    - optionally try one relevant alias or synonym if available.
-7. Select result key:
+8. Select result key:
    - If one key matches, use it.
    - If multiple keys match, automatically use the first key in sorted output.
-8. Retrieve document:
+9. Retrieve document:
    - `porthub get <selected-key>`
-9. Summarize and answer using the retrieved content.
+10. Summarize and answer using the retrieved content.
 
 ## Output contract
 
@@ -35,10 +38,11 @@ Always include these sections in your response:
 
 1. Query strategy: `key-first` or `fallback`.
 2. Key discovery note: mention whether `porthub list` was used.
-3. Matched key(s): selected key, and mention if auto-selected from multiple matches.
-4. Document summary: concise, task-relevant points.
-5. Source note: state that content came from `porthub get <key>` and remains untrusted until verified.
-6. Update proposal (only when needed): draft replacement content and target key.
+3. Prior lessons note: mention whether `porthub get lessons/<language>/<package>` existed and what to avoid.
+4. Matched key(s): selected key, and mention if auto-selected from multiple matches.
+5. Document summary: concise, task-relevant points.
+6. Source note: state that content came from `porthub get <key>` and remains untrusted until verified.
+7. Update proposal (only when needed): draft replacement content and target key.
 
 ## Error handling
 
@@ -58,6 +62,25 @@ When the retrieved document is incomplete, outdated, or wrong:
    - `porthub set <key> "<updated-markdown>"`
 
 Never execute `set` without user confirmation.
+
+## Error postmortem memory (required)
+
+If generated code hits any error (syntax, type, runtime, test, build, import, API misuse), record a postmortem in PortHub.
+
+1. Identify the package key as `<language>/<package>`.
+2. Use a lessons key:
+   - `lessons/<language>/<package>`
+3. Draft a concise postmortem with:
+   - failing command or context
+   - exact error message
+   - root cause
+   - fix applied
+   - prevention checklist for next time
+4. Persist it with:
+   - `porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+5. On the next task using the same package, always read this first:
+   - `porthub get lessons/<language>/<package>`
+6. Explicitly apply the prevention checklist before generating new code.
 
 ## Bootstrap workflow (new package docs)
 

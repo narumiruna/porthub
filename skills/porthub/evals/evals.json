@@ -18,6 +18,12 @@
       "prompt": "I forgot the exact key for requests. Please inspect available keys first, then fetch the most relevant porthub doc and summarize it.",
       "expected_output": "Uses porthub list for key discovery, then key-first or fallback search as needed, retrieves one key with get, and summarizes with source key traceability.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I got a runtime error while using Python Typer yesterday. Please check if we have previous lessons for this package, and make sure new guidance avoids the same mistake.",
+      "expected_output": "Reads lessons/python/typer with porthub get first when available, references prior mistakes in the response, and enforces postmortem recording after any new error.",
+      "files": []
     }
   ]
 }
