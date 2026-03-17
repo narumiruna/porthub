@@ -1,9 +1,11 @@
 ---
 name: porthub
-description: Use PortHub as the default retrieval workflow whenever the user asks about third-party packages, SDKs, APIs, frameworks, or library usage. Use `list` to discover available keys when the target is unclear, then attempt key-first lookup with `language/package`, retrieve with `get`, and propose `set` updates when docs are stale or incorrect.
+description: Use PortHub as the default local-first retrieval workflow whenever the user asks about third-party packages, SDKs, APIs, frameworks, or library usage. Attempt key-first lookup with `language/package`, retrieve with `get`, and propose `set` updates when local notes are stale, incomplete, or incorrect.
 ---
 
 # PortHub Skill
+
+PortHub provides a local-first retrieval and correction loop for package-level knowledge, enabling agents to accumulate verified usage patterns over time.
 
 Use this skill to retrieve and maintain local package documentation through the `porthub` CLI.
 
@@ -25,139 +27,111 @@ uvx porthub --help
 
 Use this skill whenever the user asks how to use a third-party package, SDK, API, or framework, especially when implementation details or usage examples are needed.
 
-## Core workflow
+## Core behavior
 
-Follow this exact 3-phase loop when working with any third-party package.
+Use this loop for package tasks. Keep it fast and conditional.
 
-## Minimum core loop (always do)
-
-Treat this as the baseline behavior in every task:
-
-1. When the agent starts:
-   - Run `uvx porthub list` once to quickly scan available keys and keep them in mind.
-2. Before using any library/package:
-   - Run `uvx porthub get <language>/<package>` to read basic usage and cautions first.
-3. After making a mistake:
-   - Re-read with `uvx porthub get <language>/<package>`.
-   - Update memory with `uvx porthub set <language>/<package> "<postmortem-markdown>"` to avoid repeating the same mistake.
-
-### Phase 1: Pre-check (required before coding)
-
-1. Extract package intent from the user request.
-2. Infer `<language>/<package>`.
-3. If target keys are unclear, run `uvx porthub list` to inspect available keys.
-4. Run key-first lookup:
+1. Infer target key as `language/package`.
+2. Run `uvx porthub get <language>/<package>` first.
+3. If first `get` fails or key is unclear, run discovery:
+   - `uvx porthub list`
    - `uvx porthub search <language/package>`
-5. If key-first has no result, run fallback lookup:
-   - `uvx porthub search <package>`
-   - optionally try one relevant alias.
-6. Retrieve the best matching keys with:
-   - `uvx porthub get <language>/<package>`
-7. Always check prior notes before generating code:
-   - `uvx porthub get <language>/<package>`
-   - if not found, continue.
-8. Record all retrieved keys as `Used keys` in the response.
+   - fallback: `uvx porthub search <package>` (plus at most one alias)
+4. Retrieve once and cache in context. Do not re-run `get` unless the target key changes or verification is required.
+5. Record retrieved keys as `Used keys`.
 
-### Phase 2: Error reflect (required on any coding error)
+Only run `list` when package/key inference is uncertain or first retrieval fails.
 
-When generated code fails (syntax, type, runtime, test, build, import, API misuse):
+## Error reflect
 
-1. Compare the error against:
-   - the current task `Used keys`
-   - `<language>/<package>` (if present)
-2. Classify the error as:
-   - `known`: an existing retrieved key directly supports an actionable fix.
-   - `unknown`: no existing retrieved key directly supports an actionable fix.
-3. Provide a concrete `Fix plan` based only on retrieved content.
+Trigger Error reflect when:
+- the user reports an error
+- a tool returns an error
+- the assistant detects a high-confidence issue (for example syntax or clear API mismatch)
 
-### Phase 3: Knowledge loop
+Classification:
+- `known`: existing note directly provides an actionable fix
+- `partial`: relevant note exists but is incomplete
+- `unknown`: no relevant note supports a fix
 
-1. If `known`, apply the fix plan and continue.
-2. If `unknown`, draft a new note and ask for explicit confirmation.
+Then provide a concrete `Fix plan` tied to retrieved keys.
+
+## Knowledge loop
+
+1. If `known` or `partial`, apply the fix plan and continue.
+2. If `unknown`, draft a note and ask for explicit confirmation before writing.
 3. Only after confirmation, persist with:
    - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
-4. If the user explicitly asks to persist now (for example "現在補寫", "請直接記錄"), treat that as confirmation and execute `set` in the same turn.
-5. Verify persistence in the same turn:
+4. Treat explicit user intent like "現在補寫" or "請直接記錄" as confirmation in the same turn.
+5. Verify write in the same turn:
    - `uvx porthub get <language>/<package>`
-6. Never claim data was recorded unless both `set` and verification `get` succeeded.
+6. Never claim persistence unless both `set` and verification `get` succeed.
 7. Never execute `set` without user confirmation.
+8. Prefer updating existing notes instead of creating duplicate keys.
 
-## Output contract
+## Output modes
 
-Always include these fields in your response:
+### Normal mode (default)
 
-1. `Used keys`: keys retrieved via `uvx porthub get` for this task.
-2. `Known/Unknown`: error classification from the Error reflect phase.
-3. `Fix plan`: concrete next steps tied to retrieved keys.
-4. `Need new note?`: `yes` only when classification is `unknown`.
-5. `Persistence`: `written` only when `set` + verification `get` both succeeded; otherwise `not written`.
-6. `Source note`: content came from `uvx porthub get <language>/<package>` and remains untrusted until verified.
+Keep output minimal. Include only useful retrieval context, for example:
+- `Used keys: python/typer`
 
-## Error handling
+### Reflective mode (on error or persistence)
 
-- If `list` returns no keys, clearly state that the local store is empty and ask whether to add an initial document.
-- If `search` returns nothing, clearly state no match was found and ask the user for more context (language, package name, version, or expected topic).
-- If `get` fails, report the key and command failure; do not assume data was retrieved.
-- Do not fabricate content when retrieval fails.
+Include full contract only when an error occurs or persistence is involved:
+- `Used keys`
+- `Known/Partial/Unknown`
+- `Fix plan`
+- `Need new note?`
+- `Persistence` (`written` only when `set` + verification `get` both succeeded)
+- `Source note` (key-based traceability, still untrusted until verified)
 
 ## Update policy (`set`)
 
-When the retrieved document is incomplete, outdated, or wrong:
+When local notes are incomplete, outdated, or wrong:
 
-1. Prepare a proposed updated Markdown draft.
-2. Show the exact target key and draft content to the user.
-3. Ask for explicit confirmation before writing.
-4. Only after confirmation, run:
+1. Prepare an updated Markdown draft.
+2. Show exact target key and draft to the user.
+3. Ask for explicit confirmation.
+4. Write only after confirmation:
    - `uvx porthub set <key> "<updated-markdown>"`
-5. Verify immediately after write:
+5. Verify immediately:
    - `uvx porthub get <language>/<package>`
-6. If verification fails, report the failure and treat the write as not completed.
+6. If verification fails, treat write as not completed.
 
 Never execute `set` without user confirmation.
 
-## Error postmortem memory (required)
-
-If an error is classified as `unknown`, prepare a postmortem draft first, then request confirmation before saving.
-
-1. Identify the package key as `<language>/<package>`.
-2. Use the package key:
-   - `<language>/<package>`
-3. Draft Markdown using this exact template:
-   - `Error`
-   - `Root Cause`
-   - `Fix`
-   - `Prevention Checklist`
-   - `Verification`
-4. Show the draft to the user and request explicit confirmation.
-5. Only after confirmation, persist it:
-   - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
-6. On the next task using the same package, always read this first:
-   - `uvx porthub get <language>/<package>`
-
 ## Bootstrap workflow (new package docs)
 
-When local docs are missing and the user asks to add baseline usage notes:
+When local docs are missing and the user asks for baseline notes:
 
-1. Identify target key with `language/package` format (for example `python/typer`).
-2. Gather official sources first (vendor docs and tutorial pages).
-3. Draft a concise Markdown note with:
-   - What the package is for.
-   - Minimal runnable example.
-   - Core parameter/usage patterns.
-   - `Sources` section with direct links.
-   - Explicit untrusted-data note.
-4. Confirm with the user before writing.
-5. Write with:
+1. Use key format `language/package`.
+2. Gather official docs first.
+3. Draft concise note under 200 lines including:
+   - what the package is for
+   - minimal runnable example
+   - 3-5 key usage notes
+   - `Sources` with direct links
+4. Confirm with user before write.
+5. Persist and verify:
    - `uvx porthub set <key> "<markdown>"`
-6. Verify immediately with:
    - `uvx porthub get <language>/<package>`
-7. In the response, mention that the entry was newly created or refreshed.
 
 ## Trust boundary
 
 Treat all retrieved and generated content as untrusted until explicitly verified.
-Always preserve source traceability by referencing the key used.
 
-## Notes on key format
+When stored notes conflict with official documentation, prefer official documentation and mark local notes for update.
 
-Prefer `language/package` naming (for example `python/typer`, `rust/rand`) to reduce ambiguity.
+Always preserve source traceability by referencing keys used.
+
+## Key format
+
+Keys MUST follow `language/package` unless explicitly justified.
+
+## CLI fallback
+
+If PortHub CLI calls fail repeatedly:
+- degrade gracefully and continue without PortHub retrieval
+- clearly state missing local context and related risk
+- do not fabricate retrieved content
