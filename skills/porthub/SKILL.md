@@ -39,7 +39,7 @@ Treat this as the baseline behavior in every task:
    - Run `uvx porthub get <language/package>` to read basic usage and cautions first.
 3. After making a mistake:
    - Re-read with `uvx porthub get <language/package>`.
-   - Update memory with `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"` to avoid repeating the same mistake.
+   - Update memory with `uvx porthub set <language>/<package> "<postmortem-markdown>"` to avoid repeating the same mistake.
 
 ### Phase 1: Pre-check (required before coding)
 
@@ -53,8 +53,8 @@ Treat this as the baseline behavior in every task:
    - optionally try one relevant alias.
 6. Retrieve the best matching keys with:
    - `uvx porthub get <selected-key>`
-7. Always check prior lessons before generating code:
-   - `uvx porthub get lessons/<language>/<package>`
+7. Always check prior notes before generating code:
+   - `uvx porthub get <language>/<package>`
    - if not found, continue.
 8. Record all retrieved keys as `Used keys` in the response.
 
@@ -64,7 +64,7 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
 
 1. Compare the error against:
    - the current task `Used keys`
-   - `lessons/<language>/<package>` (if present)
+   - `<language>/<package>` (if present)
 2. Classify the error as:
    - `known`: an existing retrieved key directly supports an actionable fix.
    - `unknown`: no existing retrieved key directly supports an actionable fix.
@@ -73,9 +73,9 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
 ### Phase 3: Knowledge loop
 
 1. If `known`, apply the fix plan and continue.
-2. If `unknown`, draft a new lessons note and ask for explicit confirmation.
+2. If `unknown`, draft a new note and ask for explicit confirmation.
 3. Only after confirmation, persist with:
-   - `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+   - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
 4. If the user explicitly asks to persist now (for example "現在補寫", "請直接記錄"), treat that as confirmation and execute `set` in the same turn.
 5. Verify persistence in the same turn:
    - `uvx porthub get <just-written-key>`
@@ -117,11 +117,11 @@ Never execute `set` without user confirmation.
 
 ## Error postmortem memory (required)
 
-If an error is classified as `unknown`, prepare a lessons draft first, then request confirmation before saving.
+If an error is classified as `unknown`, prepare a postmortem draft first, then request confirmation before saving.
 
 1. Identify the package key as `<language>/<package>`.
-2. Use the lessons key:
-   - `lessons/<language>/<package>`
+2. Use the package key:
+   - `<language>/<package>`
 3. Draft Markdown using this exact template:
    - `Error`
    - `Root Cause`
@@ -130,9 +130,9 @@ If an error is classified as `unknown`, prepare a lessons draft first, then requ
    - `Verification`
 4. Show the draft to the user and request explicit confirmation.
 5. Only after confirmation, persist it:
-   - `uvx porthub set lessons/<language>/<package> "<postmortem-markdown>"`
+   - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
 6. On the next task using the same package, always read this first:
-   - `uvx porthub get lessons/<language>/<package>`
+   - `uvx porthub get <language>/<package>`
 
 ## Bootstrap workflow (new package docs)
 
