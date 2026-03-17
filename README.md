@@ -48,6 +48,18 @@ Search by key or content (case-insensitive):
 porthub search typer
 ```
 
+## Skills
+
+This repository includes a local skill for package-documentation retrieval workflows:
+
+- Install:
+
+```bash
+npx skills add narumiruna/porthub
+```
+
+- Skill source: `skills/porthub/SKILL.md`
+
 ## Key Rules
 
 A key is valid only when all rules pass:
