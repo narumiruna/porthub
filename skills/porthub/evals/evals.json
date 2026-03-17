@@ -1,0 +1,23 @@
+{
+  "skill_name": "porthub",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm implementing a Python CLI and need Typer patterns for subcommands and option validation. Please use our local porthub docs first.",
+      "expected_output": "Uses key-first lookup with python/typer, retrieves docs with get, and summarizes with source key traceability.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "How do I sample random values in Rust with rand? Please check porthub and tell me if docs look stale.",
+      "expected_output": "Uses key-first lookup with rust/rand, retrieves docs, and provides a safe update proposal flow if stale content is detected.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I only remember the package name 'requests'. Find relevant docs from porthub and answer based on what you retrieve.",
+      "expected_output": "Falls back from key-first to broad search, handles possible multiple matches by selecting first sorted key, then retrieves and summarizes.",
+      "files": []
+    }
+  ]
+}
