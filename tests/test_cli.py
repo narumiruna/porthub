@@ -248,3 +248,9 @@ def test_root_option_overrides_env(runner: CliRunner, isolated_home: Path, monke
     assert result.exit_code == 0
     assert (explicit_root / "python" / "typer.md").read_text(encoding="utf-8") == "explicit"
     assert not (env_root / "python" / "typer.md").exists()
+
+
+def test_server_command_is_available(runner: CliRunner, isolated_home: Path) -> None:
+    result = runner.invoke(app, ["server", "--help"])
+    assert result.exit_code == 0
+    assert "--name" in result.output

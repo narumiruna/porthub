@@ -1,12 +1,12 @@
 # PortHub
 
-PortHub is a local-first CLI tool for storing and retrieving Markdown context by hierarchical keys.
+PortHub is a local-first tool for storing and retrieving Markdown context by hierarchical keys via CLI and MCP.
 
 ## MVP Scope
 
 - Local filesystem storage only (default: `~/.porthub`; configurable via `PORTHUB_HOME` or `--root`).
-- CLI-only workflows.
-- Four commands: `set`, `get`, `search`, `list`.
+- CLI workflows plus an MCP stdio server.
+- Five commands: `set`, `get`, `search`, `list`, `server`.
 - Exact match for `get`.
 - Case-insensitive substring match for `search` (with optional key-only/content-only modes).
 
@@ -111,6 +111,60 @@ Or set a default storage root via environment variable:
 ```bash
 export PORTHUB_HOME=./tmp-porthub
 porthub list
+```
+
+## MCP Server
+
+Start MCP server over stdio:
+
+```bash
+uv run porthub server
+uvx porthub server
+```
+
+Use custom storage root:
+
+```bash
+uv run porthub server --root ./tmp-porthub
+```
+
+Default MCP tools (namespaced):
+
+- `porthub_get(key)`
+- `porthub_set(key, value)`
+- `porthub_search(query, mode=\"all\"|\"key\"|\"content\", limit=None)`
+- `porthub_list()`
+
+Tool responses are structured JSON objects with:
+
+- `ok` (`true` or `false`)
+- `error` (`null` or `{code, message}`)
+- tool payload fields such as `key`, `content`, `matches`, `keys`
+
+Example MCP client configuration (same pattern as `uvx + args`):
+
+```json
+{
+  "mcpServers": {
+    "porthub": {
+      "command": "uvx",
+      "args": ["porthub", "server"]
+    }
+  }
+}
+```
+
+With custom storage root:
+
+```json
+{
+  "mcpServers": {
+    "porthub": {
+      "command": "uvx",
+      "args": ["porthub", "server", "--root", "./tmp-porthub"]
+    }
+  }
+}
 ```
 
 ## Skills
