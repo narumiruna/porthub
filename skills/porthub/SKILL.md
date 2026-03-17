@@ -23,6 +23,8 @@ Or run directly without installation:
 uvx porthub --help
 ```
 
+If the task requires workspace-local isolation, use `--root <path>` or set `PORTHUB_HOME`.
+
 ## When to use
 
 Use this skill whenever the user asks how to use a third-party package, SDK, API, or framework, especially when implementation details or usage examples are needed.
@@ -34,9 +36,9 @@ Use this loop for package tasks. Keep it fast and conditional.
 1. Infer target key as `language/package`.
 2. Run `uvx porthub get <language>/<package>` first.
 3. If first `get` fails or key is unclear, run discovery:
-   - `uvx porthub list`
-   - `uvx porthub search <language/package>`
-   - fallback: `uvx porthub search <package>` (plus at most one alias)
+   - `uvx porthub list [--root <path>]`
+   - `uvx porthub search <language/package> [--key-only] [--limit <n>] [--root <path>]`
+   - fallback: `uvx porthub search <package> [--key-only] [--limit <n>] [--root <path>]` (plus at most one alias)
 4. Retrieve once and cache in context. Do not re-run `get` unless the target key changes or verification is required.
 5. Record retrieved keys as `Used keys`.
 
@@ -61,10 +63,11 @@ Then provide a concrete `Fix plan` tied to retrieved keys.
 1. If `known` or `partial`, apply the fix plan and continue.
 2. If `unknown`, draft a note and ask for explicit confirmation before writing.
 3. Only after confirmation, persist with:
-   - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
+   - short content: `uvx porthub set <language>/<package> "<postmortem-markdown>"`
+   - long content: `uvx porthub set <language>/<package> --file <markdown-file>` or `--stdin`
 4. Treat explicit user intent like "現在補寫" or "請直接記錄" as confirmation in the same turn.
 5. Verify write in the same turn:
-   - `uvx porthub get <language>/<package>`
+   - `uvx porthub get <language>/<package> [--root <path>]`
 6. Never claim persistence unless both `set` and verification `get` succeed.
 7. Never execute `set` without user confirmation.
 8. Prefer updating existing notes instead of creating duplicate keys.
@@ -94,9 +97,10 @@ When local notes are incomplete, outdated, or wrong:
 2. Show exact target key and draft to the user.
 3. Ask for explicit confirmation.
 4. Write only after confirmation:
-   - `uvx porthub set <key> "<updated-markdown>"`
+   - short content: `uvx porthub set <key> "<updated-markdown>"`
+   - long content: `uvx porthub set <key> --file <markdown-file>` or `--stdin`
 5. Verify immediately:
-   - `uvx porthub get <language>/<package>`
+   - `uvx porthub get <language>/<package> [--root <path>]`
 6. If verification fails, treat write as not completed.
 
 Never execute `set` without user confirmation.
@@ -114,8 +118,8 @@ When local docs are missing and the user asks for baseline notes:
    - `Sources` with direct links
 4. Confirm with user before write.
 5. Persist and verify:
-   - `uvx porthub set <key> "<markdown>"`
-   - `uvx porthub get <language>/<package>`
+   - `uvx porthub set <key> --file <markdown-file>` (preferred for long notes)
+   - `uvx porthub get <language>/<package> [--root <path>]`
 
 ## Trust boundary
 

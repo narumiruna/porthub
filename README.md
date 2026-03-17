@@ -4,11 +4,11 @@ PortHub is a local-first CLI tool for storing and retrieving Markdown context by
 
 ## MVP Scope
 
-- Local filesystem storage only (`~/.porthub`).
+- Local filesystem storage only (default: `~/.porthub`; configurable via `PORTHUB_HOME` or `--root`).
 - CLI-only workflows.
 - Four commands: `set`, `get`, `search`, `list`.
 - Exact match for `get`.
-- Case-insensitive substring match for `search`.
+- Case-insensitive substring match for `search` (with optional key-only/content-only modes).
 
 ## Install
 
@@ -44,10 +44,22 @@ porthub --help
 
 ## Usage
 
-Set Markdown content:
+Set Markdown content from an inline string:
 
 ```bash
 porthub set python/typer "# Typer\nCLI framework for Python"
+```
+
+Set Markdown content from a file:
+
+```bash
+porthub set python/typer --file ./notes/typer.md
+```
+
+Set Markdown content from stdin:
+
+```bash
+cat ./notes/typer.md | porthub set python/typer --stdin
 ```
 
 Get content by exact key:
@@ -62,9 +74,42 @@ Search by key or content (case-insensitive):
 porthub search typer
 ```
 
+Search by key only:
+
+```bash
+porthub search typer --key-only
+```
+
+Search by content only:
+
+```bash
+porthub search typer --content-only
+```
+
+Limit search results:
+
+```bash
+porthub search typer --limit 10
+```
+
 List all keys:
 
 ```bash
+porthub list
+```
+
+Use a custom storage root for any command:
+
+```bash
+porthub --help
+porthub list --root ./tmp-porthub
+porthub get python/typer --root ./tmp-porthub
+```
+
+Or set a default storage root via environment variable:
+
+```bash
+export PORTHUB_HOME=./tmp-porthub
 porthub list
 ```
 
@@ -101,3 +146,9 @@ A key is valid only when all rules pass:
 - Validation failures return non-zero exit code.
 - `get` returns non-zero when a key is not found.
 - `search` returns empty output with exit code `0` when no match exists.
+- `search` returns non-zero when `--key-only` and `--content-only` are both provided.
+- `search` returns non-zero when `--limit` is not greater than `0`.
+- `set` returns non-zero unless exactly one content source is provided:
+  - positional `value`
+  - `--file`
+  - `--stdin`
