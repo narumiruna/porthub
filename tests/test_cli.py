@@ -65,6 +65,37 @@ def test_set_creates_and_overwrites_file(runner: CliRunner, isolated_home: Path)
     assert stored_path.read_text(encoding="utf-8") == "second"
 
 
+def test_set_reads_value_from_file(runner: CliRunner, isolated_home: Path) -> None:
+    source_file = isolated_home / "note.md"
+    source_file.write_text("from file", encoding="utf-8")
+
+    result = runner.invoke(app, ["set", "python/typer", "--file", str(source_file)])
+    assert result.exit_code == 0
+
+    stored_path = isolated_home / ".porthub" / "python" / "typer.md"
+    assert stored_path.read_text(encoding="utf-8") == "from file"
+
+
+def test_set_reads_value_from_stdin(runner: CliRunner, isolated_home: Path) -> None:
+    result = runner.invoke(app, ["set", "python/typer", "--stdin"], input="from stdin")
+    assert result.exit_code == 0
+
+    stored_path = isolated_home / ".porthub" / "python" / "typer.md"
+    assert stored_path.read_text(encoding="utf-8") == "from stdin"
+
+
+def test_set_requires_exactly_one_content_source(runner: CliRunner, isolated_home: Path) -> None:
+    source_file = isolated_home / "note.md"
+    source_file.write_text("from file", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        ["set", "python/typer", "inline", "--file", str(source_file)],
+    )
+    assert result.exit_code != 0
+    assert "exactly one content source" in result.output.lower()
+
+
 def test_get_returns_exact_content(runner: CliRunner, isolated_home: Path) -> None:
     stored_path = isolated_home / ".porthub" / "python" / "typer.md"
     stored_path.parent.mkdir(parents=True, exist_ok=True)
@@ -97,6 +128,56 @@ def test_search_matches_key_and_content_case_insensitive(
     result = runner.invoke(app, ["search", "typer"])
     assert result.exit_code == 0
     assert result.output.splitlines() == ["docs/guide", "python/typer"]
+
+
+def test_search_key_only_ignores_content_matches(runner: CliRunner, isolated_home: Path) -> None:
+    root = isolated_home / ".porthub"
+    (root / "python").mkdir(parents=True, exist_ok=True)
+    (root / "python" / "typer.md").write_text("no mention", encoding="utf-8")
+    (root / "docs").mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "guide.md").write_text("Use Typer here", encoding="utf-8")
+
+    result = runner.invoke(app, ["search", "typer", "--key-only"])
+    assert result.exit_code == 0
+    assert result.output.splitlines() == ["python/typer"]
+
+
+def test_search_content_only_ignores_key_matches(runner: CliRunner, isolated_home: Path) -> None:
+    root = isolated_home / ".porthub"
+    (root / "python").mkdir(parents=True, exist_ok=True)
+    (root / "python" / "typer.md").write_text("nothing", encoding="utf-8")
+    (root / "docs").mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "guide.md").write_text("Use Typer here", encoding="utf-8")
+
+    result = runner.invoke(app, ["search", "typer", "--content-only"])
+    assert result.exit_code == 0
+    assert result.output.splitlines() == ["docs/guide"]
+
+
+def test_search_limit_caps_results(runner: CliRunner, isolated_home: Path) -> None:
+    root = isolated_home / ".porthub"
+    (root / "a" / "one.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "a" / "one.md").write_text("typer", encoding="utf-8")
+    (root / "b" / "two.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "b" / "two.md").write_text("typer", encoding="utf-8")
+    (root / "c" / "three.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "c" / "three.md").write_text("typer", encoding="utf-8")
+
+    result = runner.invoke(app, ["search", "typer", "--limit", "2"])
+    assert result.exit_code == 0
+    assert len(result.output.splitlines()) == 2
+
+
+def test_search_rejects_conflicting_modes(runner: CliRunner, isolated_home: Path) -> None:
+    result = runner.invoke(app, ["search", "typer", "--key-only", "--content-only"])
+    assert result.exit_code != 0
+    assert "choose only one mode" in result.output.lower()
+
+
+def test_search_rejects_non_positive_limit(runner: CliRunner, isolated_home: Path) -> None:
+    result = runner.invoke(app, ["search", "typer", "--limit", "0"])
+    assert result.exit_code != 0
+    assert "greater than 0" in result.output.lower()
 
 
 def test_search_returns_empty_output_when_no_match(runner: CliRunner, isolated_home: Path) -> None:
@@ -143,3 +224,27 @@ def test_list_returns_empty_output_when_no_markdown_files(runner: CliRunner, iso
     result = runner.invoke(app, ["list"])
     assert result.exit_code == 0
     assert result.output == ""
+
+
+def test_commands_use_porthub_home_env(runner: CliRunner, isolated_home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    custom_root = isolated_home / "custom-store"
+    monkeypatch.setenv("PORTHUB_HOME", str(custom_root))
+
+    result_set = runner.invoke(app, ["set", "python/typer", "env-root"])
+    assert result_set.exit_code == 0
+    assert (custom_root / "python" / "typer.md").read_text(encoding="utf-8") == "env-root"
+
+    result_list = runner.invoke(app, ["list"])
+    assert result_list.exit_code == 0
+    assert result_list.output.splitlines() == ["python/typer"]
+
+
+def test_root_option_overrides_env(runner: CliRunner, isolated_home: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    env_root = isolated_home / "env-store"
+    explicit_root = isolated_home / "explicit-store"
+    monkeypatch.setenv("PORTHUB_HOME", str(env_root))
+
+    result = runner.invoke(app, ["set", "python/typer", "explicit", "--root", str(explicit_root)])
+    assert result.exit_code == 0
+    assert (explicit_root / "python" / "typer.md").read_text(encoding="utf-8") == "explicit"
+    assert not (env_root / "python" / "typer.md").exists()
