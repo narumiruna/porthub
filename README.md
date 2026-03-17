@@ -58,10 +58,16 @@ porthub list
 
 This repository includes a local skill for package-documentation retrieval workflows:
 
-- Install:
+- Install (method 1):
 
 ```bash
 npx skills add narumiruna/porthub
+```
+
+- Install (method 2):
+
+```bash
+npx ctx7 skills install narumiruna/porthub
 ```
 
 - Skill source: `skills/porthub/SKILL.md`
