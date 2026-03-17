@@ -15,8 +15,8 @@
     },
     {
       "id": 3,
-      "prompt": "I only remember the package name 'requests'. Find relevant docs from porthub and answer based on what you retrieve.",
-      "expected_output": "Falls back from key-first to broad search, handles possible multiple matches by selecting first sorted key, then retrieves and summarizes.",
+      "prompt": "I forgot the exact key for requests. Please inspect available keys first, then fetch the most relevant porthub doc and summarize it.",
+      "expected_output": "Uses porthub list for key discovery, then key-first or fallback search as needed, retrieves one key with get, and summarizes with source key traceability.",
       "files": []
     }
   ]
