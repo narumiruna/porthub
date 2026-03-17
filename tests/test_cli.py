@@ -113,3 +113,33 @@ def test_search_rejects_empty_query(runner: CliRunner, isolated_home: Path) -> N
     result = runner.invoke(app, ["search", "   "])
     assert result.exit_code != 0
     assert "must not be empty" in result.output.lower()
+
+
+def test_list_returns_all_keys_sorted(runner: CliRunner, isolated_home: Path) -> None:
+    root = isolated_home / ".porthub"
+    (root / "zeta" / "alpha.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "zeta" / "alpha.md").write_text("z", encoding="utf-8")
+    (root / "python" / "typer.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "python" / "typer.md").write_text("p", encoding="utf-8")
+    (root / "docs" / "guide.md").parent.mkdir(parents=True, exist_ok=True)
+    (root / "docs" / "guide.md").write_text("d", encoding="utf-8")
+
+    result = runner.invoke(app, ["list"])
+    assert result.exit_code == 0
+    assert result.output.splitlines() == ["docs/guide", "python/typer", "zeta/alpha"]
+
+
+def test_list_returns_empty_output_when_root_missing(runner: CliRunner, isolated_home: Path) -> None:
+    result = runner.invoke(app, ["list"])
+    assert result.exit_code == 0
+    assert result.output == ""
+
+
+def test_list_returns_empty_output_when_no_markdown_files(runner: CliRunner, isolated_home: Path) -> None:
+    root = isolated_home / ".porthub" / "python"
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "notes.txt").write_text("not markdown", encoding="utf-8")
+
+    result = runner.invoke(app, ["list"])
+    assert result.exit_code == 0
+    assert result.output == ""

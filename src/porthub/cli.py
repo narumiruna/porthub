@@ -36,6 +36,18 @@ def key_to_path(key: str) -> Path:
     return storage_root() / f"{key}.md"
 
 
+def list_keys_from_root(root: Path) -> list[str]:
+    if not root.exists():
+        return []
+    keys: list[str] = []
+    for md_path in root.rglob("*.md"):
+        if not md_path.is_file():
+            continue
+        key = md_path.relative_to(root).with_suffix("").as_posix()
+        keys.append(key)
+    return sorted(keys)
+
+
 def _raise_key_error(error: ValueError) -> None:
     raise typer.BadParameter(str(error), param_hint="key") from error
 
@@ -87,14 +99,12 @@ def search(query: str) -> None:
     if not normalized_query:
         raise typer.BadParameter("Query must not be empty.", param_hint="query")
     root = storage_root()
-    if not root.exists():
-        return
     query_lower = normalized_query.lower()
     matches: set[str] = set()
-    for md_path in root.rglob("*.md"):
-        if not md_path.is_file():
+    for key in list_keys_from_root(root):
+        md_path = key_to_path(key)
+        if not md_path.exists():
             continue
-        key = md_path.relative_to(root).with_suffix("").as_posix()
         key_match = query_lower in key.lower()
         if key_match:
             matches.add(key)
@@ -106,4 +116,10 @@ def search(query: str) -> None:
         if query_lower in content.lower():
             matches.add(key)
     for key in sorted(matches):
+        typer.echo(key)
+
+
+@app.command("list")
+def list_keys() -> None:
+    for key in list_keys_from_root(storage_root()):
         typer.echo(key)

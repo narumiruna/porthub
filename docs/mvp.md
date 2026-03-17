@@ -17,7 +17,7 @@ PortHub must let a user:
 - CLI interface only.
 - Hierarchical keys such as `python/typer`.
 - Markdown payloads stored as `.md` files.
-- Commands: `set`, `get`, `search`.
+- Commands: `set`, `get`, `search`, `list`.
 
 ## Out of Scope
 
@@ -75,6 +75,12 @@ Invalid keys must fail fast with a clear CLI error.
 - Return matched keys, one per line, sorted ascending.
 - Return empty output with exit code `0` when no match exists.
 
+### `porthub list`
+
+- Scan all `~/.porthub/**/*.md` files.
+- Return all normalized keys, one per line, sorted ascending.
+- Return empty output with exit code `0` when no keys exist.
+
 ## Error Handling
 
 - Validation and not-found cases must produce deterministic, human-readable messages.
@@ -93,8 +99,9 @@ The MVP is complete only when all criteria pass:
 1. `set` creates and overwrites mapped `.md` files correctly.
 2. `get` returns exact content for existing keys and proper errors for missing keys.
 3. `search` returns deterministic key lists based on substring matches.
-4. Invalid keys are rejected consistently across all commands.
-5. Behavior is covered by automated tests for happy path and failure cases.
+4. `list` returns deterministic key lists for all stored documents.
+5. Invalid keys are rejected consistently across key-based commands.
+6. Behavior is covered by automated tests for happy path and failure cases.
 
 ## Future Work (Post-MVP)
 

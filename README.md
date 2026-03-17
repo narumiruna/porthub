@@ -6,7 +6,7 @@ PortHub is a local-first CLI tool for storing and retrieving Markdown context by
 
 - Local filesystem storage only (`~/.porthub`).
 - CLI-only workflows.
-- Three commands: `set`, `get`, `search`.
+- Four commands: `set`, `get`, `search`, `list`.
 - Exact match for `get`.
 - Case-insensitive substring match for `search`.
 
@@ -46,6 +46,12 @@ Search by key or content (case-insensitive):
 
 ```bash
 porthub search typer
+```
+
+List all keys:
+
+```bash
+porthub list
 ```
 
 ## Skills
