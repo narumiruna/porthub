@@ -36,9 +36,9 @@ Treat this as the baseline behavior in every task:
 1. When the agent starts:
    - Run `uvx porthub list` once to quickly scan available keys and keep them in mind.
 2. Before using any library/package:
-   - Run `uvx porthub get <language/package>` to read basic usage and cautions first.
+   - Run `uvx porthub get <language>/<package>` to read basic usage and cautions first.
 3. After making a mistake:
-   - Re-read with `uvx porthub get <language/package>`.
+   - Re-read with `uvx porthub get <language>/<package>`.
    - Update memory with `uvx porthub set <language>/<package> "<postmortem-markdown>"` to avoid repeating the same mistake.
 
 ### Phase 1: Pre-check (required before coding)
@@ -52,7 +52,7 @@ Treat this as the baseline behavior in every task:
    - `uvx porthub search <package>`
    - optionally try one relevant alias.
 6. Retrieve the best matching keys with:
-   - `uvx porthub get <selected-key>`
+   - `uvx porthub get <language>/<package>`
 7. Always check prior notes before generating code:
    - `uvx porthub get <language>/<package>`
    - if not found, continue.
@@ -78,7 +78,7 @@ When generated code fails (syntax, type, runtime, test, build, import, API misus
    - `uvx porthub set <language>/<package> "<postmortem-markdown>"`
 4. If the user explicitly asks to persist now (for example "現在補寫", "請直接記錄"), treat that as confirmation and execute `set` in the same turn.
 5. Verify persistence in the same turn:
-   - `uvx porthub get <just-written-key>`
+   - `uvx porthub get <language>/<package>`
 6. Never claim data was recorded unless both `set` and verification `get` succeeded.
 7. Never execute `set` without user confirmation.
 
@@ -91,7 +91,7 @@ Always include these fields in your response:
 3. `Fix plan`: concrete next steps tied to retrieved keys.
 4. `Need new note?`: `yes` only when classification is `unknown`.
 5. `Persistence`: `written` only when `set` + verification `get` both succeeded; otherwise `not written`.
-6. `Source note`: content came from `uvx porthub get <key>` and remains untrusted until verified.
+6. `Source note`: content came from `uvx porthub get <language>/<package>` and remains untrusted until verified.
 
 ## Error handling
 
@@ -110,7 +110,7 @@ When the retrieved document is incomplete, outdated, or wrong:
 4. Only after confirmation, run:
    - `uvx porthub set <key> "<updated-markdown>"`
 5. Verify immediately after write:
-   - `uvx porthub get <key>`
+   - `uvx porthub get <language>/<package>`
 6. If verification fails, report the failure and treat the write as not completed.
 
 Never execute `set` without user confirmation.
@@ -150,7 +150,7 @@ When local docs are missing and the user asks to add baseline usage notes:
 5. Write with:
    - `uvx porthub set <key> "<markdown>"`
 6. Verify immediately with:
-   - `uvx porthub get <key>`
+   - `uvx porthub get <language>/<package>`
 7. In the response, mention that the entry was newly created or refreshed.
 
 ## Trust boundary
