@@ -2,7 +2,7 @@
 
 PortHub is a local-first tool for storing and retrieving Markdown context by hierarchical keys via CLI and MCP.
 
-## MVP Scope
+## Current Scope
 
 - Local filesystem storage only (default: `~/.porthub`; configurable via `PORTHUB_HOME` or `--root`).
 - CLI workflows plus an MCP stdio server.
@@ -130,10 +130,16 @@ uv run porthub server --root ./tmp-porthub
 
 Default MCP tools (namespaced):
 
-- `porthub_get(key)`
-- `porthub_set(key, value)`
-- `porthub_search(query, mode=\"all\"|\"key\"|\"content\", limit=None)`
-- `porthub_list()`
+- `porthub_search(query, mode=\"all\"|\"key\"|\"content\", limit=None)`: search keys and/or content.
+- `porthub_get(key)`: retrieve content by exact key.
+- `porthub_set(key, value)`: create or replace a key's content.
+- `porthub_list()`: list all keys.
+
+Recommended workflow:
+
+1. Use key-first search with `language/package` (for example, `python/typer`).
+2. If no match exists, run a fallback search with package name or alias.
+3. Call `porthub_get` with the selected key and verify retrieved content before use.
 
 Tool responses are structured JSON objects with:
 
