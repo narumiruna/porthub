@@ -1,9 +1,14 @@
+import hashlib
 import os
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from typing import IO
 from typing import Literal
 
 ROOT_DIR_NAME = ".porthub"
+LOCKS_DIR_NAME = ".locks"
 SearchMode = Literal["all", "key", "content"]
 
 
@@ -44,6 +49,52 @@ def key_to_path(root: Path, key: str) -> Path:
     return root / f"{key}.md"
 
 
+def _lock_path_for_key(root: Path, key: str) -> Path:
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    return root / LOCKS_DIR_NAME / f"{digest}.lock"
+
+
+def _lock_file(file_obj: IO[bytes]) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        file_obj.seek(0)
+        file_obj.write(b"\0")
+        file_obj.flush()
+        file_obj.seek(0)
+        msvcrt.locking(file_obj.fileno(), msvcrt.LK_LOCK, 1)
+        return
+
+    import fcntl
+
+    fcntl.flock(file_obj.fileno(), fcntl.LOCK_EX)
+
+
+def _unlock_file(file_obj: IO[bytes]) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        file_obj.seek(0)
+        msvcrt.locking(file_obj.fileno(), msvcrt.LK_UNLCK, 1)
+        return
+
+    import fcntl
+
+    fcntl.flock(file_obj.fileno(), fcntl.LOCK_UN)
+
+
+@contextmanager
+def _acquire_key_lock(*, root: Path, key: str) -> Iterator[None]:
+    lock_path = _lock_path_for_key(root, key)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+b") as lock_file:
+        _lock_file(lock_file)
+        try:
+            yield
+        finally:
+            _unlock_file(lock_file)
+
+
 def list_keys_from_root(root: Path) -> list[str]:
     if not root.exists():
         return []
@@ -58,17 +109,18 @@ def list_keys_from_root(root: Path) -> list[str]:
 
 def write_key(*, root: Path, key: str, content: str) -> str:
     normalized_key = validate_key(key)
-    path = key_to_path(root, normalized_key)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        dir=path.parent,
-        delete=False,
-    ) as tmp_file:
-        tmp_file.write(content)
-        temp_path = Path(tmp_file.name)
-    temp_path.replace(path)
+    with _acquire_key_lock(root=root, key=normalized_key):
+        path = key_to_path(root, normalized_key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            delete=False,
+        ) as tmp_file:
+            tmp_file.write(content)
+            temp_path = Path(tmp_file.name)
+        temp_path.replace(path)
     return normalized_key
 
 
