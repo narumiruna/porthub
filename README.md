@@ -200,6 +200,7 @@ A key is valid only when all rules pass:
 3. It does not contain `//`.
 4. It does not contain `..`.
 5. It does not end with `.md`.
+6. It does not contain reserved segment `.locks`.
 
 ## Error Behavior
 

@@ -42,6 +42,9 @@ def validate_key(key: str) -> str:
     if normalized.endswith(".md"):
         msg = "Key must not end with '.md'."
         raise ValueError(msg)
+    if any(segment == LOCKS_DIR_NAME for segment in normalized.split("/")):
+        msg = f"Key must not use reserved segment '{LOCKS_DIR_NAME}'."
+        raise ValueError(msg)
     return normalized
 
 

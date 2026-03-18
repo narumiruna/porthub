@@ -27,6 +27,8 @@ def isolated_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         ("python//typer",),
         ("python/../typer",),
         ("python/typer.md",),
+        (".locks/foo",),
+        ("foo/.locks/bar",),
     ],
 )
 def test_set_rejects_invalid_keys(runner: CliRunner, isolated_home: Path, invalid_key: str) -> None:
@@ -45,6 +47,8 @@ def test_set_rejects_invalid_keys(runner: CliRunner, isolated_home: Path, invali
         ("python//typer",),
         ("python/../typer",),
         ("python/typer.md",),
+        (".locks/foo",),
+        ("foo/.locks/bar",),
     ],
 )
 def test_get_rejects_invalid_keys(runner: CliRunner, isolated_home: Path, invalid_key: str) -> None:

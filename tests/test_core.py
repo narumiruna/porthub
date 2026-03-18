@@ -47,6 +47,12 @@ def test_validate_key_allows_descriptive_hierarchical_keys(key: str) -> None:
     assert core.validate_key(key) == key
 
 
+@pytest.mark.parametrize("key", [".locks", ".locks/foo", "foo/.locks/bar"])
+def test_validate_key_rejects_reserved_locks_segment(key: str) -> None:
+    with pytest.raises(ValueError, match="reserved segment"):
+        core.validate_key(key)
+
+
 def test_read_key_raises_on_missing_key(root: Path) -> None:
     with pytest.raises(core.KeyNotFoundError):
         core.read_key(root=root, key="python/missing")
