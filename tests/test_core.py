@@ -39,6 +39,14 @@ def test_write_and_read_key_roundtrip(root: Path) -> None:
     assert content == "content"
 
 
+@pytest.mark.parametrize(
+    "key",
+    ["python/troubleshooting", "machinelearning/svm", "lessons/python/typer"],
+)
+def test_validate_key_allows_descriptive_hierarchical_keys(key: str) -> None:
+    assert core.validate_key(key) == key
+
+
 def test_read_key_raises_on_missing_key(root: Path) -> None:
     with pytest.raises(core.KeyNotFoundError):
         core.read_key(root=root, key="python/missing")

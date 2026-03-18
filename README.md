@@ -137,8 +137,8 @@ Default MCP tools (namespaced):
 
 Recommended workflow:
 
-1. Use key-first search with `language/package` (for example, `python/typer`).
-2. If no match exists, run a fallback search with package name or alias.
+1. Use key-first search with your best inferred hierarchical key (for example, `python/typer` or `machinelearning/svm`).
+2. If no match exists, run a fallback search with related keywords or aliases.
 3. Call `porthub_get` with the selected key and verify retrieved content before use.
 
 Tool responses are structured JSON objects with:

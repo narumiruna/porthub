@@ -1,6 +1,6 @@
 ---
 name: porthub
-description: Use PortHub as the default local-first retrieval workflow whenever the user asks about third-party packages, SDKs, APIs, frameworks, or library usage. Attempt key-first lookup with `language/package`, retrieve with `get`, and propose `set` updates when local notes are stale, incomplete, or incorrect.
+description: Use PortHub as the default local-first retrieval workflow whenever the user asks about third-party packages, SDKs, APIs, frameworks, or library usage. Attempt key-first lookup with a hierarchical key, retrieve with `get`, and propose `set` updates when local notes are stale, incomplete, or incorrect.
 ---
 
 # PortHub Skill
@@ -33,12 +33,12 @@ Use this skill whenever the user asks how to use a third-party package, SDK, API
 
 Use this loop for package tasks. Keep it fast and conditional.
 
-1. Infer target key as `language/package`.
-2. Run `uvx porthub get <language>/<package>` first.
+1. Infer a stable, descriptive hierarchical key.
+2. Run `uvx porthub get <key>` first.
 3. If first `get` fails or key is unclear, run discovery:
    - `uvx porthub list [--root <path>]`
-   - `uvx porthub search <language/package> [--key-only] [--limit <n>] [--root <path>]`
-   - fallback: `uvx porthub search <package> [--key-only] [--limit <n>] [--root <path>]` (plus at most one alias)
+   - `uvx porthub search <key> [--key-only] [--limit <n>] [--root <path>]`
+   - fallback: `uvx porthub search <keyword> [--key-only] [--limit <n>] [--root <path>]` (plus at most one alias)
 4. Retrieve once and cache in context. Do not re-run `get` unless the target key changes or verification is required.
 5. Record retrieved keys as `Used keys`.
 
@@ -63,11 +63,11 @@ Then provide a concrete `Fix plan` tied to retrieved keys.
 1. If `known` or `partial`, apply the fix plan and continue.
 2. If `unknown`, draft a note and ask for explicit confirmation before writing.
 3. Only after confirmation, persist with:
-   - short content: `uvx porthub set <language>/<package> "<postmortem-markdown>"`
-   - long content: `uvx porthub set <language>/<package> --file <markdown-file>` or `--stdin`
+   - short content: `uvx porthub set <key> "<postmortem-markdown>"`
+   - long content: `uvx porthub set <key> --file <markdown-file>` or `--stdin`
 4. Treat explicit user intent like "現在補寫" or "請直接記錄" as confirmation in the same turn.
 5. Verify write in the same turn:
-   - `uvx porthub get <language>/<package> [--root <path>]`
+   - `uvx porthub get <key> [--root <path>]`
 6. Never claim persistence unless both `set` and verification `get` succeed.
 7. Never execute `set` without user confirmation.
 8. Prefer updating existing notes instead of creating duplicate keys.
@@ -100,7 +100,7 @@ When local notes are incomplete, outdated, or wrong:
    - short content: `uvx porthub set <key> "<updated-markdown>"`
    - long content: `uvx porthub set <key> --file <markdown-file>` or `--stdin`
 5. Verify immediately:
-   - `uvx porthub get <language>/<package> [--root <path>]`
+   - `uvx porthub get <key> [--root <path>]`
 6. If verification fails, treat write as not completed.
 
 Never execute `set` without user confirmation.
@@ -109,7 +109,7 @@ Never execute `set` without user confirmation.
 
 When local docs are missing and the user asks for baseline notes:
 
-1. Use key format `language/package`.
+1. Use a stable, descriptive hierarchical key (for example, `python/typer`, `python/troubleshooting`, `machinelearning/svm`).
 2. Gather official docs first.
 3. Draft concise note under 200 lines including:
    - what the package is for
@@ -119,7 +119,7 @@ When local docs are missing and the user asks for baseline notes:
 4. Confirm with user before write.
 5. Persist and verify:
    - `uvx porthub set <key> --file <markdown-file>` (preferred for long notes)
-   - `uvx porthub get <language>/<package> [--root <path>]`
+   - `uvx porthub get <key> [--root <path>]`
 
 ## Trust boundary
 
@@ -131,7 +131,7 @@ Always preserve source traceability by referencing keys used.
 
 ## Key format
 
-Keys MUST follow `language/package` unless explicitly justified.
+Keys SHOULD be hierarchical and descriptive. They are not limited to `language/package`.
 
 ## CLI fallback
 

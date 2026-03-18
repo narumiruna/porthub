@@ -107,6 +107,18 @@ def test_get_returns_exact_content(runner: CliRunner, isolated_home: Path) -> No
     assert result.output == content
 
 
+def test_set_and_get_support_descriptive_hierarchical_key(runner: CliRunner, isolated_home: Path) -> None:
+    key = "machinelearning/svm"
+    value = "SVM notes"
+
+    result_set = runner.invoke(app, ["set", key, value])
+    assert result_set.exit_code == 0
+
+    result_get = runner.invoke(app, ["get", key])
+    assert result_get.exit_code == 0
+    assert result_get.output == value
+
+
 def test_get_missing_key_returns_non_zero(runner: CliRunner, isolated_home: Path) -> None:
     result = runner.invoke(app, ["get", "python/missing"])
     assert result.exit_code != 0

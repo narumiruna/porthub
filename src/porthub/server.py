@@ -18,8 +18,7 @@ def _register_get_tool(mcp: FastMCP, *, root: Path) -> None:
     def porthub_get(key: str) -> dict[str, object]:
         """Retrieve markdown content stored under an exact PortHub key.
 
-        Use this after selecting a key from `porthub_search` (prefer key-first
-        lookup with `language/package`).
+        Use this after selecting a key from `porthub_search`.
 
         Args:
             key: Target key without the `.md` suffix.
@@ -69,8 +68,8 @@ def _register_search_tool(mcp: FastMCP, *, root: Path) -> None:
         """Search keys and/or markdown content stored in PortHub.
 
         Recommended workflow follows the PortHub skill:
-        1. key-first query with `language/package`
-        2. fallback query with package name or alias if needed
+        1. key-first query with your best inferred hierarchical key
+        2. fallback query with relevant keywords or aliases if needed
         3. call `porthub_get` with the selected key
 
         Args:
